@@ -115,18 +115,51 @@ void setup() {
     }
   }
 
-  lcdMessage("BPM = " + String(pulseRate) + " PF = " + String(pulseFraction), "baseline = " + String(baseline));
+  lcdMessage("BPM=" + String(pulseRate) + " PF=" + String(pulseFraction), "baseline=" + String(baseline));
 
   // turn on the motor
-  analogWrite(motorPin, 0);
+  analogWrite(motorPin, 10);
   delay(1000);
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
+
+  // update values while looping
+  if (buttonPressed(pulseButton)) {
+    if (pulseRate < 120) {
+      pulseRate = pulseRate + 5;
+    } else {
+      pulseRate = 5;
+    }
+    lcdMessage("BPM=" + String(pulseRate) + " PF=" + String(pulseFraction), "baseline=" + String(baseline));
+  }
+
+  if (buttonPressed(fracButton)) {
+    if (pulseFraction < 120) {
+      pulseFraction = pulseFraction + 5;
+    } else {
+      pulseFraction = 25;
+    }
+    lcdMessage("BPM=" + String(pulseRate) + " PF=" + String(pulseFraction), "baseline=" + String(baseline));
+  }
+
+  if (buttonPressed(baseButton)) {
+    if (baseline < 20) {
+      baseline = baseline + 5;
+    } else {
+      baseline = 5;
+    }
+    lcdMessage("BPM=" + String(pulseRate) + " PF=" + String(pulseFraction), "baseline=" + String(baseline));
+  }
+
+  // motor controlling code
   int bufferLength = 125 - pulseFraction;
   digitalWrite(13, HIGH);  // turn on the built in led when the heartbeat begins
 
+  Serial.println(pulseRate);
+  Serial.println(pulseFraction);
+  Serial.println(baseline);
   for (int i = 0; i < bufferLength; i++){
     int currentFlow = flowVector[i];
     if (currentFlow < baseline) currentFlow = baseline;
@@ -136,6 +169,7 @@ void loop() {
     if (i > 0) digitalWrite(13, LOW);
     Serial.println(currentFlow);
 
-    delay(60 * 1000/(pulseRate*bufferLength));
+    unsigned long interval = 60000UL / ((unsigned long)pulseRate * bufferLength);
+    delay(interval);
   }
 }
