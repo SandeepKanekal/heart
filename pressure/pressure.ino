@@ -80,8 +80,7 @@ void loop() {
 
   Serial.print(currentTime);
   Serial.print(",");
-  Serial.print(pressure);
-  Serial.println();
+  Serial.println(pressure);
 
   delay(10);
 }
