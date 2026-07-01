@@ -1,72 +1,29 @@
-#include <Wire.h>
-#include <LiquidCrystal_I2C.h>
+#include "HX711.h"
 
-const int pressurePin = A1;
-const double sens = 1.0 / (5.0 * pow(10.0, -6.0) * 5.0 * 1000.0); 
+const int dt = 3;
+const int sck = 4;
 
-int rawADC = 0;
-float voltage = 0.0;
+HX711 scale;
+
+long rawADC = 0;
 float pressure = 0.0; // pressure in mmHg
-float V0 = 0.0;
 
-const byte confButton = 37;
+// values obtained from experiment. May change depending on transducer model and amplifier.
+const float offsetPressure = 5.830111;  // b
+const float mmHgPerCount = 3.011542e-5;  // m
 
 unsigned long startTime;
-LiquidCrystal_I2C lcd(0x27, 16, 2);
 
-bool buttonPressed(byte pin){
-  if (digitalRead(pin) == LOW){
-    delay(20);
-    if (digitalRead(pin) == LOW){
-      while (digitalRead(pin) == LOW){
-        // Wait for release
-      }
-      delay(20);
-      return true;
-    }
-  }
-  return false;
-}
-
-void lcdMessage(const String& msg1, const String& msg2 = ""){
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print(msg1);
-  lcd.setCursor(0, 1);
-  lcd.print(msg2);
-}
-
-// Formula logic: P = (V - V0) * Sensitivity
-float calcPressure(float inputVoltage) {
-  return (inputVoltage - V0) * sens;
+// Formula logic: P = m*rawADC + b
+float calcPressure(long inputCounts) {
+  return (mmHgPerCount * inputCounts) + offsetPressure;
 }
 
 void setup() {
-  Serial.begin(9600);
-  Wire.begin();
+  Serial.begin(115200);
 
-  delay(1000);
-
-  pinMode(confButton, INPUT_PULLUP);
-
-  lcd.init();
-  lcd.backlight();
-  lcdMessage("Disconnect", "Transducer");
-  delay(2000);
-  lcdMessage("Press conf.", "Button");
-
-  while (!buttonPressed(confButton)) {
-    delay(10); 
-  }
-  
-  lcdMessage("Setting V0", "Please wait...");
-  delay(500);
-  
-  int sampleADC = analogRead(pressurePin);
-  V0 = sampleADC * (5.0 / 1023.0); 
-  
-  lcdMessage("V0 set to:", String(V0) + " V");
-  delay(1500);
+  scale.begin(dt, sck);
+  scale.set_gain(128);
 
   startTime = millis();
 }
@@ -74,11 +31,10 @@ void setup() {
 void loop() {
   unsigned long currentTime = millis() - startTime;
 
-  rawADC = analogRead(pressurePin);
-  voltage = rawADC * (5.0 / 1023.0);
-  pressure = calcPressure(voltage); 
+  rawADC = scale.read();
+  pressure = calcPressure(rawADC);
 
-  Serial.print(currentTime);
+  Serial.print(currentTime / 1000.0);
   Serial.print(",");
   Serial.println(pressure);
 
