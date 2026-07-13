@@ -45,8 +45,7 @@ const byte fracButton = 33;
 const byte baseButton = 35;
 const byte confButton = 37;
 
-LiquidCrystal_I2C lcd(0x27, 16, 2);
-byte I2CAddress;
+LiquidCrystal_I2C lcd(0x27, 20, 4);
 
 bool buttonPressed(byte pin) {
   if (digitalRead(pin) == LOW) {
@@ -90,19 +89,6 @@ void setup() {
   // set up the HX711 with the pressure transducer
   scale.begin(dt, sck);
   scale.set_gain(64);
-
-  delay(1000);
-
-  // find lcd address
-  for (byte address = 1; address < 127; address++) {
-    Wire.beginTransmission(address);
-    if (Wire.endTransmission() == 0) {
-      I2CAddress = address;
-      break;
-    }
-  }
-
-  lcd = LiquidCrystal_I2C(I2CAddress, 16, 2);
 
   // initialise the LCD
   lcd.init();

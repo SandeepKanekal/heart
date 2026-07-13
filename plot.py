@@ -29,17 +29,28 @@ except serial.serialutil.SerialException:
 else:
     t_data = deque(maxlen=MAX_PTS)
     p_data = deque(maxlen=MAX_PTS)
+    air_p_data = deque(maxlen=MAX_PTS)
 
     app = QtWidgets.QApplication([])
 
-    plot = pg.PlotWidget()
-    plot.show()
-    plot.setWindowTitle("Blood Pressure vs Time")
-    plot.setLabel('left', 'Pressure', units='mmHg')
-    plot.setLabel('bottom', 'Time', units='s')
-    plot.showGrid(x=True, y=True)
+    win = pg.GraphicsLayoutWidget(show=True)
+    win.setWindowTitle("Blood Pressure and Air Pressure vs Time")
 
-    curve = plot.plot()
+    pressure_plot = win.addPlot(row=0, col=0)
+    pressure_plot.setLabel('left', 'Pressure', units='mmHg')
+    pressure_plot.setLabel('bottom', 'Time', units='s')
+    pressure_plot.showGrid(x=True, y=True)
+
+    pressure_curve = pressure_plot.plot()
+
+    win.nextRow()
+
+    air_pressure_plot = win.addPlot(row=0, col=1)
+    air_pressure_plot.setLabel('left', 'Air Pressure', units='mmHg')
+    air_pressure_plot.setLabel('bottom', 'Time', units='s')
+    air_pressure_plot.showGrid(x=True, y=True)
+
+    air_pressure_curve = air_pressure_plot.plot()
 
     def update():
         while True:
@@ -51,19 +62,27 @@ else:
                 if not line:
                     continue
 
-                t, p = line.split(',')
+                t, p, air_p = line.split(',')
 
                 t_data.append(float(t))
                 p_data.append(float(p))
+                air_p_data.append(float(air_p))
 
             except (ValueError, UnicodeDecodeError):
                 pass
 
         if len(t_data) > 1:
-            curve.setData(np.asarray(t_data), np.asarray(p_data))
+            t = np.asarray(t_data)
+
+            pressure_curve.setData(t, np.asarray(p_data))
+            air_pressure_curve.setData(t, np.asarray(air_p_data))
 
             if len(t_data) % 20 == 0:
-                plot.setXRange(max(0, t_data[-1] - 10), t_data[-1] + 1)
+                xmin = max(0, t_data[-1] - 10)
+                xmax = t_data[-1] + 1
+
+                pressure_plot.setXRange(xmin, xmax)
+                air_pressure_plot.setXRange(xmin, xmax)
 
     timer = QtCore.QTimer()
     timer.timeout.connect(update)
