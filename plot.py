@@ -21,6 +21,9 @@ if not SERIAL_PORT:
 
 BAUD_RATE = 115200
 MAX_PTS = 1000
+FLUID_HEIGHT = 10.0 # update before running
+OPENING_HEIGHT = 3.0 # update before running
+rho_g = 0.73556
 
 try:
     ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=0)
@@ -63,6 +66,7 @@ else:
                     continue
 
                 t, p, air_p = line.split(',')
+                air_p -= rho_g * (FLUID_HEIGHT - OPENING_HEIGHT)
 
                 t_data.append(float(t))
                 p_data.append(float(p))
