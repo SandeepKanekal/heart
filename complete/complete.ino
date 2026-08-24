@@ -45,7 +45,24 @@ const byte fracButton = 33;
 const byte baseButton = 35;
 const byte confButton = 37;
 
-LiquidCrystal_I2C lcd(0x27, 20, 4);
+byte findLCDAddress() {
+  for (byte address = 0x08; address <= 0x77; address++) {
+    Wire.beginTransmission(address);
+
+    if (Wire.endTransmission() == 0) {
+      Serial.print("I2C device found at 0x");
+      if (address < 0x10)
+        Serial.print("0");
+      Serial.println(address, HEX);
+
+      return address;
+    }
+  }
+
+  return 0;
+}
+
+LiquidCrystal_I2C lcd(findLCDAddress(), 20, 4);
 
 bool buttonPressed(byte pin) {
   if (digitalRead(pin) == LOW) {
