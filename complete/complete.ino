@@ -48,6 +48,9 @@ const byte confButton = 37;
 byte findLCDAddress() {
   for (byte address = 0x08; address <= 0x77; address++) {
     Wire.beginTransmission(address);
+    
+    if (address == 0x48)
+      continue;
 
     if (Wire.endTransmission() == 0) {
       Serial.print("I2C device found at 0x");
